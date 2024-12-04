@@ -55,3 +55,14 @@ export const updateContact = async (contactId, payload, options = {}) => {
     console.error(error.message);
   }
 };
+
+export const deleteContact = async (contactId) => {
+  try {
+    const result = await ContactsCollection.findByIdAndDelete({
+      _id: contactId,
+    });
+    return result;
+  } catch (error) {
+    console.error(error);
+  }
+};
