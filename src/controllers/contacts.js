@@ -6,9 +6,15 @@ import {
   getContactById,
   updateContact,
 } from '../services/contacts.js';
+import { parsePaginationParams } from '../utils/parseParams.js';
 
 export const getContactsController = async (req, res) => {
-  const contacts = await getAllContacts();
+  const { page, perPage } = parsePaginationParams(req.query);
+  console.log(page, perPage);
+  const contacts = await getAllContacts({
+    page,
+    perPage,
+  });
 
   res.status(200).json({
     status: 200,

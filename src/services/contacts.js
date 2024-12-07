@@ -1,27 +1,36 @@
 import createHttpError from 'http-errors';
 import { ContactsCollection } from '../db/models/contacts.js';
+import { calculatePaginationData } from '../utils/calculatePaginationData.js';
 
-export const getAllContacts = async () => {
-  try {
-    const contacts = await ContactsCollection.find();
-    return contacts;
-  } catch (error) {
-    console.error(error.message);
-  }
+export const getAllContacts = async ({ page, perPage }) => {
+  const limit = perPage;
+  const skip = (page - 1) * perPage;
+
+  const contactsQuery = ContactsCollection.find();
+  const contactsCount = await ContactsCollection.find()
+    .merge(contactsQuery)
+    .countDocuments();
+
+  const contacts = await contactsQuery.skip(skip).limit(limit).exec();
+
+  const paginationData = calculatePaginationData(contactsCount, page, perPage);
+
+  return {
+    results: contacts,
+    ...paginationData,
+  };
 };
 
 export const getContactById = async (contactId) => {
-  try {
-    const contact = await ContactsCollection.findById(contactId);
-    return contact;
-  } catch (error) {
-    console.error(error.message);
-  }
+  const contact = await ContactsCollection.findById(contactId);
+
+  return contact;
 };
 
 export const createContact = async (payload) => {
   try {
     const contact = await ContactsCollection.create(payload);
+
     return contact;
   } catch (error) {
     console.error(error.message);
@@ -37,32 +46,25 @@ export const createContact = async (payload) => {
 };
 
 export const updateContact = async (contactId, payload, options = {}) => {
-  try {
-    const result = await ContactsCollection.findByIdAndUpdate(
-      { _id: contactId },
-      payload,
-      {
-        new: true,
-        includeResultMetadata: true,
-        ...options,
-      },
-    );
+  const result = await ContactsCollection.findByIdAndUpdate(
+    { _id: contactId },
+    payload,
+    {
+      new: true,
+      includeResultMetadata: true,
+      ...options,
+    },
+  );
 
-    if (!result || !result.value) return null;
+  if (!result || !result.value) return null;
 
-    return result.value;
-  } catch (error) {
-    console.error(error.message);
-  }
+  return result.value;
 };
 
 export const deleteContact = async (contactId) => {
-  try {
-    const result = await ContactsCollection.findByIdAndDelete({
-      _id: contactId,
-    });
-    return result;
-  } catch (error) {
-    console.error(error);
-  }
+  const result = await ContactsCollection.findByIdAndDelete({
+    _id: contactId,
+  });
+
+  return result;
 };
