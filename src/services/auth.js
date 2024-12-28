@@ -1,10 +1,21 @@
+import path from 'node:path';
+import fs from 'node:fs/promises';
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import handlebars from 'handlebars';
 import createHttpError from 'http-errors';
 
 import { randomBytes } from 'crypto';
 import { UsersCollection } from '../db/models/user.js';
 import { SessionsCollection } from '../db/models/session.js';
-import { FIFTEEN_MINUTES, ONE_DAY } from '../constans/index.js';
+import {
+  FIFTEEN_MINUTES,
+  ONE_DAY,
+  SMTP,
+  TEMPLATES_DIR,
+} from '../constans/index.js';
+import { getEnvVar } from '../utils/getEnvVar.js';
+import { sendEmail } from '../utils/sendMail.js';
 
 const generateSession = () => {
   const accessToken = randomBytes(30).toString('base64');
@@ -92,4 +103,81 @@ export const refreshUserSession = async ({ sessionId, refreshToken }) => {
     userId: session.userId,
     ...newSession,
   });
+};
+
+export const sendResetEmail = async ({ email }) => {
+  const user = await UsersCollection.findOne({ email });
+
+  if (!user) {
+    throw createHttpError(404, 'User not found!');
+  }
+
+  const resetToken = jwt.sign(
+    {
+      sub: user._id,
+      email,
+    },
+    getEnvVar('JWT_SECRET'),
+    {
+      expiresIn: '15m',
+    },
+  );
+
+  const resetPwdTemplatePath = path.join(
+    TEMPLATES_DIR,
+    'reset-password-email.html',
+  );
+
+  const mailTemplateSourse = (
+    await fs.readFile(resetPwdTemplatePath)
+  ).toString();
+
+  const template = handlebars.compile(mailTemplateSourse);
+
+  const html = template({
+    name: user.name.split(' ')[0],
+    link: `${getEnvVar('APP_DOMAIN')}/reset-pwd?token=${resetToken}`,
+  });
+
+  try {
+    await sendEmail({
+      from: getEnvVar(SMTP.SMTP_FROM),
+      to: email,
+      subject: 'Reset your password',
+      html,
+    });
+  } catch {
+    throw createHttpError(
+      500,
+      'Failed to send the email, please try again later.',
+    );
+  }
+};
+
+export const resetPwd = async ({ password, token }) => {
+  let claims;
+
+  try {
+    claims = jwt.verify(token, getEnvVar('JWT_SECRET'));
+  } catch {
+    throw createHttpError(401, 'Token is expired or invalid.');
+  }
+
+  const user = await UsersCollection.findOne({
+    _id: claims.sub,
+    email: claims.email,
+  });
+
+  if (!user) {
+    throw createHttpError(404, 'User not found!');
+  }
+
+  const encryptedPwd = await bcrypt.hash(password, 10);
+
+  await SessionsCollection.deleteOne({ userId: user._id });
+
+  await UsersCollection.updateOne(
+    { _id: user._id },
+    { password: encryptedPwd },
+  );
 };
