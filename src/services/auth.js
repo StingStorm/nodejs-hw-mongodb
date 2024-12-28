@@ -136,7 +136,7 @@ export const sendResetEmail = async ({ email }) => {
 
   const html = template({
     name: user.name.split(' ')[0],
-    link: `${getEnvVar('APP_DOMAIN')}/reset-pwd?token=${resetToken}`,
+    link: `${getEnvVar('APP_DOMAIN')}/auth/reset-pwd?token=${resetToken}`,
   });
 
   try {
