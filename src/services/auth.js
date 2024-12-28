@@ -55,7 +55,7 @@ export const loginUser = async (payload) => {
     throw createHttpError(404, 'User not found');
   }
 
-  const isCorrectPwd = bcrypt.compare(payload.password, user.password);
+  const isCorrectPwd = await bcrypt.compare(payload.password, user.password);
 
   if (!isCorrectPwd) {
     throw createHttpError(401, 'Unauthorized');
