@@ -16,7 +16,9 @@ import {
 } from '../constans/index.js';
 import { getEnvVar } from '../utils/getEnvVar.js';
 import { sendEmail } from '../utils/sendMail.js';
+import { getFullNameFromGoogleTokenPayload } from '../utils/googleOAuth2.js';
 
+//Util Generate Session Func
 const generateSession = () => {
   const accessToken = randomBytes(30).toString('base64');
   const refreshToken = randomBytes(30).toString('base64');
@@ -29,6 +31,7 @@ const generateSession = () => {
   };
 };
 
+//Register Func
 export const registerUser = async (payload) => {
   const user = await UsersCollection.findOne({
     email: payload.email,
@@ -46,6 +49,7 @@ export const registerUser = async (payload) => {
   });
 };
 
+//LogIn func
 export const loginUser = async (payload) => {
   const user = await UsersCollection.findOne({
     email: payload.email,
@@ -71,6 +75,7 @@ export const loginUser = async (payload) => {
   });
 };
 
+//LogOut Func
 export const logoutUser = async (sessionId) => {
   await SessionsCollection.deleteOne({ _id: sessionId });
 };
@@ -105,6 +110,7 @@ export const refreshUserSession = async ({ sessionId, refreshToken }) => {
   });
 };
 
+//Send Reset Mail Func
 export const sendResetEmail = async ({ email }) => {
   const user = await UsersCollection.findOne({ email });
 
@@ -154,6 +160,7 @@ export const sendResetEmail = async ({ email }) => {
   }
 };
 
+//Reset Pwd Func
 export const resetPwd = async ({ password, token }) => {
   let claims;
 
@@ -180,4 +187,26 @@ export const resetPwd = async ({ password, token }) => {
     { _id: user._id },
     { password: encryptedPwd },
   );
+};
+
+//Login With Google OAuth Token Payload
+export const SignInOrUpWithGoogle = async (payload) => {
+  let user = await UsersCollection.findOne({ email: payload.email });
+
+  if (!user) {
+    const encryptedPwd = await bcrypt.hash(randomBytes(10), 10);
+
+    user = await UsersCollection.create({
+      email: payload.email,
+      name: getFullNameFromGoogleTokenPayload(payload),
+      password: encryptedPwd,
+    });
+  }
+
+  const newSession = generateSession();
+
+  return await SessionsCollection.create({
+    userId: user._id,
+    ...newSession,
+  });
 };

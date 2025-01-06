@@ -1,3 +1,4 @@
+import createHttpError from 'http-errors';
 import { ONE_DAY } from '../constans/index.js';
 import {
   loginUser,
@@ -6,7 +7,9 @@ import {
   registerUser,
   resetPwd,
   sendResetEmail,
+  SignInOrUpWithGoogle,
 } from '../services/auth.js';
+import { generateAuthUrl, validateAuthCode } from '../utils/googleOAuth2.js';
 
 const setupCookie = (res, session) => {
   res.cookie('sessionId', session._id, {
@@ -89,5 +92,38 @@ export const resetPwdController = async (req, res) => {
     status: 200,
     message: 'Password has been successfully reset.',
     data: {},
+  });
+};
+
+export const getGoogleOAuthUrlController = async (req, res) => {
+  const url = generateAuthUrl();
+
+  res.json({
+    status: 200,
+    message: 'Successfully get Google OAuth url!',
+    data: {
+      url,
+    },
+  });
+};
+
+export const loginWithGoogleController = async (req, res) => {
+  const loginTicket = await validateAuthCode(req.body.code);
+  const payload = loginTicket.getPayload();
+
+  if (!payload) {
+    throw createHttpError(401, 'Unauthorized');
+  }
+
+  const session = await SignInOrUpWithGoogle(payload);
+
+  setupCookie(res, session);
+
+  res.json({
+    status: 200,
+    message: 'Successfully logged in via Google OAuth!',
+    data: {
+      accessToken: session.accessToken,
+    },
   });
 };

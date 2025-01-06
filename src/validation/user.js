@@ -28,3 +28,7 @@ export const resetPwdShema = Joi.object({
   password: Joi.string().required(),
   token: Joi.string().required(),
 });
+
+export const googleAuthCodeSchema = Joi.object({
+  code: Joi.string().required(),
+});
