@@ -1,12 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import pino from 'pino-http';
+import cookieParser from 'cookie-parser';
 
 import { getEnvVar } from './utils/getEnvVar.js';
 import { errorHandler } from './middlewares/errorHandler.js';
 import { notFoundHandler } from './middlewares/notFoundHandler.js';
+import { swaggerDocs } from './middlewares/swaggerDocs.js';
+
 import router from './routers/index.js';
-import cookieParser from 'cookie-parser';
 
 const PORT = Number(getEnvVar('PORT', '3000'));
 
@@ -24,6 +26,8 @@ export function startServer() {
       },
     }),
   );
+
+  app.use('/api-docs', swaggerDocs());
 
   app.use(router);
 

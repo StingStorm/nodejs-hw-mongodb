@@ -87,7 +87,7 @@ export const refreshUserSession = async ({ sessionId, refreshToken }) => {
   });
 
   if (!session) {
-    throw createHttpError(401, 'Session not found');
+    throw createHttpError(404, 'Session not found');
   }
 
   const isSessionExpired =
