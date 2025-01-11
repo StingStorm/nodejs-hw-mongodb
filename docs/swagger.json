@@ -11,10 +11,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000"
-    },
-    {
-      "url": "https://example.com/api/v1"
+      "url": "https://contacts-app-keo6.onrender.com"
     }
   ],
   "tags": [
