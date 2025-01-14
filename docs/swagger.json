@@ -190,7 +190,7 @@
         ],
         "requestBody": {
           "content": {
-            "mutipart/form-data": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "required": [
@@ -231,6 +231,7 @@
                   "photo": {
                     "description": "Link to contact`s photo",
                     "type": "string",
+                    "format": "binary",
                     "example": "https://res.cloudinary.com/dczy5l6qy/image/upload/v1735416820/awmvuwbavo9kdohcts6n.jpg"
                   }
                 }
@@ -403,7 +404,7 @@
         ],
         "requestBody": {
           "content": {
-            "mutipart/form-data": {
+            "multipart/form-data": {
               "schema": {
                 "type": "object",
                 "properties": {
@@ -439,6 +440,7 @@
                   "photo": {
                     "description": "Link to contact`s photo",
                     "type": "string",
+                    "format": "binary",
                     "example": "https://res.cloudinary.com/dczy5l6qy/image/upload/v1735416820/awmvuwbavo9kdohcts6n.jpg"
                   }
                 }
